@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    
+
+
+
+    <script>
+
+
+
+
+
+
+
+        // FUNCTION FOR CLEANING DATA. EDIT FOR OTHER CHANGES.
+        async function trimNYC(path){
+            let nyc= await d3.csv(path)
+            let boroughs= {}
+
+            // Shuffle array to get random data points 
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    // Swap array[i] and array[j]
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            // Get all elements from dataset for each of the neighborhoods of nyc
+            nyc.map((element)=>{
+                let borough= element.neighbourhood
+                if (borough in boroughs){
+                    boroughs[borough].push(element)
+                }
+                else{
+                    boroughs[borough]=[]
+                    boroughs[borough].push(element)
+                }
+            })
+            
+            let final={}
+
+            // Shuffle each of the datasets for each of the boroughs and get 20 percent of the elements.
+            for(const key in boroughs){
+                let item= boroughs[key]
+                shuffleArray(item)
+                let length= item.length
+                let tenPercent= Math.ceil(.2*length)
+                final[key]= item.slice(0,tenPercent)
+            }
+
+            
+
+            return final
+        }
+
+        async function trimBoston(path){
+            let boston= await d3.csv(path)
+            let boroughs= {}
+
+            // Shuffle array to get random data points 
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    // Swap array[i] and array[j]
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            // Get all elements from dataset for each of the boroughs of nyc.
+            boston.map((element)=>{
+                let borough= element.neighbourhood
+                if (borough in boroughs){
+                    boroughs[borough].push(element)
+                }
+                else{
+                    boroughs[borough]=[]
+                    boroughs[borough].push(element)
+                }
+            })
+
+            return boroughs
+        }
+
+        // UNCOMMENT IF EDITING DATA IS NEEDED AGAIN
+        // let nycFinal=trimNYC("./listings.csv")
+        // let bostonFinal=trimBoston("./listings-2.csv")
+
+        // Promise.all([nycFinal,bostonFinal])
+        //         .then(([data,data2])=>{
+        //             let merge= {}
+
+        //             for(let index in data){
+        //                 merge[index]=data[index]
+        //             }
+
+        //             for (let index2 in data2){
+        //                 merge[index2]=data2[index2]
+        //             }
+
+        //             let stringify= JSON.stringify(merge)
+                    
+        //         })
+    </script>
+</body>
+</html>
