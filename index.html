@@ -4,19 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-    
-
-
-
+    <svg id="boston" height="800" width="800" style="margin: 20px"></svg>
+    <svg id="nyc" height="800" width="800" style="margin: 20px"></svg>
     <script>
 
+        const createVisualiation= async function(){
+            const bostonmap = await d3.json("boston.topojson")
+            const bostonsvg = d3.select("#boston")
+            let margin = bostonsvg.attr("margin")
+            let mapWidth = bostonsvg.attr("width")
+            let mapHeight = bostonsvg.attr("height")
+
+            let props = topojson.feature(bostonmap,bostonmap.objects.boston)
+
+            const visualization = bostonsvg.append("g");
+            var bostonMesh = topojson.mesh(bostonmap,bostonmap.objects.boston)
+            let bostonFeature = topojson.feature(bostonmap,bostonmap.objects.boston)
+            let proj = d3.geoMercator().fitSize([mapWidth, mapHeight], bostonMesh)
+            let path = d3.geoPath().projection(proj)
+
+            console.log(path)
+
+            let zipSelection = visualization.selectAll("path.ny").data(props.features)
+                                            .join("path")
+                                            .attr("something", d => d.id)
+                                            // .attr("fill", d =>colorScaling(d.properties.median_income))
+                                            .attr("fill", "orange")
+                                            .attr("d", path)
+
+            let meshPath = visualization.append("path")
+                                        .datum(bostonMesh)
+                                        .attr("d", path)
+                                        .style("stroke", "white")
+                                        .style("stroke-width", 1)
+                                    .style("fill", "none")
+            
+            let newyorkPath = visualization.append("path").datum(bostonMesh)
+                                                        .attr("class", "outline")
+                                                        .attr("d", path)
+                                                        .raise()
+        }
+
+        createVisualiation()
 
         // FUNCTION FOR CLEANING DATA. EDIT FOR OTHER CHANGES.
         async function trimNYC(path){
+
             let nyc= await d3.csv(path)
             let boroughs= {}
 
@@ -84,6 +121,8 @@
 
             return boroughs
         }
+
+
 
         // UNCOMMENT IF EDITING DATA IS NEEDED AGAIN
         // let nycFinal=trimNYC("./listings.csv")
