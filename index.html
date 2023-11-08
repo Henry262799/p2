@@ -6,10 +6,17 @@
     <title>Document</title>
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .neighborhood {
+        fill: none;
+        stroke: #000;
+        stroke-linejoin: round;
+    }
+    </style>
 </head>
 <body>
-    <svg id="boston" height="800" width="800" style="margin: 20px"></svg>
-    <svg id="nyc" height="800" width="800" style="margin: 20px"></svg>
+    <svg id="boston" height="600" width="600" style="margin: 20px"></svg>
+    <svg id="nyc" height="600" width="600" style="margin: 20px"></svg>
     <script>
 
         const createVisualiation= async function(){
@@ -19,34 +26,49 @@
             let mapWidth = bostonsvg.attr("width")
             let mapHeight = bostonsvg.attr("height")
 
-            let props = topojson.feature(bostonmap,bostonmap.objects.boston)
-
-            const visualization = bostonsvg.append("g");
+            const bostonvisualization = bostonsvg.append("g");
             var bostonMesh = topojson.mesh(bostonmap,bostonmap.objects.boston)
             let bostonFeature = topojson.feature(bostonmap,bostonmap.objects.boston)
-            let proj = d3.geoMercator().fitSize([mapWidth, mapHeight], bostonMesh)
-            let path = d3.geoPath().projection(proj)
+            let bostonproj = d3.geoMercator().fitSize([mapWidth, mapHeight], bostonMesh)
+            let bostonpath = d3.geoPath().projection(bostonproj)
 
-            console.log(path)
+            let bostonSelection = bostonvisualization.selectAll("path")
+                                                    .data(bostonFeature.features)
+                                                    .join("path")
+                                                    .attr("fill", "white")
+                                                    .attr("stroke", "black")
+                                                    .attr("d", bostonpath);
 
-            let zipSelection = visualization.selectAll("path.ny").data(props.features)
-                                            .join("path")
-                                            .attr("something", d => d.id)
-                                            // .attr("fill", d =>colorScaling(d.properties.median_income))
-                                            .attr("fill", "orange")
-                                            .attr("d", path)
+            let bostonMeshPath = bostonvisualization.append("path")
+                                                    .datum(bostonMesh)
+                                                    .attr("d", bostonpath)
+                                                    .attr("stroke", "black")
+                                                    .attr("stroke-width", 1)
+                                                    .attr("fill", "none");
 
-            let meshPath = visualization.append("path")
-                                        .datum(bostonMesh)
-                                        .attr("d", path)
-                                        .style("stroke", "white")
-                                        .style("stroke-width", 1)
-                                    .style("fill", "none")
-            
-            let newyorkPath = visualization.append("path").datum(bostonMesh)
-                                                        .attr("class", "outline")
-                                                        .attr("d", path)
-                                                        .raise()
+
+            const nycmap = await d3.json("NTA.topojson")
+            const nycsvg = d3.select("#nyc")
+            const nycvisualization = nycsvg.append("g");
+            var nycMesh = topojson.mesh(nycmap,nycmap.objects.collection)
+            let nycFeature = topojson.feature(nycmap,nycmap.objects.collection)
+            let nycproj = d3.geoMercator().fitSize([mapWidth, mapHeight], nycMesh)
+            let nycpath = d3.geoPath().projection(nycproj)
+
+            let nycSelection = nycvisualization.selectAll("path")
+                                                    .data(nycFeature.features)
+                                                    .join("path")
+                                                    .attr("fill", "white")
+                                                    .attr("stroke", "black")
+                                                    .attr("d", nycpath);
+
+            let nycMeshPath = nycvisualization.append("path")
+                                                    .datum(nycMesh)
+                                                    .attr("d", nycpath)
+                                                    .attr("stroke", "black")
+                                                    .attr("stroke-width", 1)
+                                                    .attr("fill", "none");
+
         }
 
         createVisualiation()
