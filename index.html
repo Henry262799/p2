@@ -12,20 +12,49 @@
         stroke: #000;
         stroke-linejoin: round;
     }
+        #boston-container{
+            display: flex;
+            flex-direction: row;
+            justify-content:space-around;
+            margin-bottom: 40px;
+        }
+
+        #nyc-container{
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            
+        }
     </style>
 </head>
 <body>
-    <svg id="boston" height="600" width="600" style="margin: 20px"></svg>
-    <svg id="nyc" height="600" width="600" style="margin: 20px"></svg>
+    <div id="boston-container">
+        <svg id="boston" height="700" width="750" "></svg>
+        <div id="boston-controls">
+
+        </div>
+    </div>
+    <div id="nyc-container">
+        <svg id="nyc" height="700" width="750"></svg>
+        <div id="nyc-controls">
+
+        </div>
+    </div>
     <script>
 
         const createVisualiation= async function(){
+            const bnbdata= await d3.json("merge-clean.json")
+            console.log(bnbdata)
+
+
+
+            // Boston constants
             const bostonmap = await d3.json("boston.topojson")
             const bostonsvg = d3.select("#boston")
-            let margin = bostonsvg.attr("margin")
             let mapWidth = bostonsvg.attr("width")
             let mapHeight = bostonsvg.attr("height")
 
+            // Boston map drawing
             const bostonvisualization = bostonsvg.append("g");
             var bostonMesh = topojson.mesh(bostonmap,bostonmap.objects.boston)
             let bostonFeature = topojson.feature(bostonmap,bostonmap.objects.boston)
@@ -46,7 +75,60 @@
                                                     .attr("stroke-width", 1)
                                                     .attr("fill", "none");
 
+            // Boston control section
+            const bostonControls= d3.select("#boston-controls")
+            const uniqueNeighborhoods= new Set(bnbdata.boston.map((element)=>element.neighbourhood))
+            const allNeighborhoods= Array.from(uniqueNeighborhoods)
+            let neighborhoodControl= makeInput(bostonControls,"Neighborhoods:",allNeighborhoods)
 
+            let priceInterval= d3.extent(bnbdata.boston.map((element)=> parseInt(element.price)))
+            let priceRange=[]
+            for (let i = 0; i <= priceInterval[1]; i += 500) {
+                priceRange.push(i)
+            }
+
+
+            let minPriceControl= makeInput(bostonControls,"Min Price:",priceRange)
+            let maxPriceControl= makeInput(bostonControls,"Max Price:",priceRange)
+
+            let bedInterval= d3.extent(bnbdata.boston.map((element)=> parseInt(element.bed)))
+            let bedRange=[]
+            for (let i=0;i<bedInterval[1];i++){
+                bedRange.push(i)
+            }
+
+            let bedControl= makeInput(bostonControls,"Number of Beds:",bedRange)
+
+            let bathInterval= d3.extent(bnbdata.boston.map((element)=> parseInt(element.baths)))
+            let bathRange=[]
+            for (let i=0;i<bathInterval[1];i++){
+                bathRange.push(i)
+            }
+            
+            let bathControl=makeInput(bostonControls,"Number of Baths:",bathRange)
+
+            const dwellingtype= new Set(bnbdata.boston.map((element)=>element.type))
+            const allDwellings= Array.from(dwellingtype)
+
+            let housingType= makeInput(bostonControls,"Housing Type:",allDwellings)
+
+            // const priceRange= d3.extent(bnbdata.boston.)
+            // console.log(res)
+ 
+            // bostonControls.append("p").text("Min Price:")
+            //               .append("input")
+            //               .attr("type")
+            
+            // Min price
+            // Max Price
+            // Neighborhood (Can be none)
+            // Room type
+            // Bedrooms and Bathrooms
+
+            // console.log()
+
+
+            // NYC constants
             const nycmap = await d3.json("NTA.topojson")
             const nycsvg = d3.select("#nyc")
             const nycvisualization = nycsvg.append("g");
@@ -55,6 +137,7 @@
             let nycproj = d3.geoMercator().fitSize([mapWidth, mapHeight], nycMesh)
             let nycpath = d3.geoPath().projection(nycproj)
 
+            // NYC map drawings
             let nycSelection = nycvisualization.selectAll("path")
                                                     .data(nycFeature.features)
                                                     .join("path")
@@ -68,6 +151,81 @@
                                                     .attr("stroke", "black")
                                                     .attr("stroke-width", 1)
                                                     .attr("fill", "none");
+
+            const nycControls= d3.select("#nyc-controls")
+            const uniquenycNeighborhoods= new Set(bnbdata.nyc.map((element)=>element.neighbourhood))
+            const allnycNeighborhoods= Array.from(uniquenycNeighborhoods)
+            let neighborhoodnycControl= makeInput(nycControls,"Neighborhoods: ",allnycNeighborhoods)
+
+            let pricenycInterval= d3.extent(bnbdata.nyc.map((element)=> parseInt(element.price)))
+            let pricenycRange=[]
+            for (let i = 0; i <= pricenycInterval[1]; i += 500) {
+                pricenycRange.push(i)
+            }
+
+
+            let minPricenycControl= makeInput(nycControls,"Min Price: ",pricenycRange)
+            let maxPricenycControl= makeInput(nycControls,"Max Price: ",pricenycRange)
+
+            let bednycInterval= d3.extent(bnbdata.nyc.map((element)=> parseInt(element.bed)))
+            let bednycRange=[]
+            for (let i=0;i<bednycInterval[1];i++){
+                bednycRange.push(i)
+            }
+
+            let bednycControl= makeInput(nycControls,"Number of Beds: ",bednycRange)
+
+            let bathnycInterval= d3.extent(bnbdata.nyc.map((element)=> parseInt(element.baths)))
+            let bathnycRange=[]
+            for (let i=0;i<bathnycInterval[1];i++){
+                bathnycRange.push(i)
+            }
+            
+            let bathnycControl=makeInput(nycControls,"Number of Baths: ",bathnycRange)
+
+            const dwellingnyctype= new Set(bnbdata.nyc.map((element)=>element.type))
+            const allnycDwellings= Array.from(dwellingnyctype)
+
+            let housingnycType= makeInput(nycControls,"Housing Type: ",allnycDwellings)
+            
+            
+            // Input slider setup
+            // const bnbdata= await d3.json("merge2.json")
+            // console.log(bnbdata)
+            // console.log(res)
+            // console.log(allNeighborhoods)
+
+            function makeInput(container,label, options){
+                
+                let div =container.append("div")
+                div.append("p").text(label)
+
+                let selector=div.append("select").attr("id",label)
+
+                selector.selectAll("option")
+                        .data(options)
+                        .join("option")
+                        .text(d=> d)
+
+            }
+            
+
+            // TO DO
+            // dropdown input for filters 
+            
+            // Container for filter controls
+            // Filter is updated from inputs
+            // Points that pass filter can be rendered.
+
+
+            // No default values so no initial data rendering until a submit happens
+            // Render data points after getting the input values or submission
+
+            // Depending on the amount of data filter the amount of data that will be allowed to rendered
+            // Maybe add a jitter function to move points around to decrease the amount of overlap.
+            
+            // Integrate a hover feature for a div to come up with additional information on the point
+
 
         }
 
@@ -144,6 +302,99 @@
             return boroughs
         }
 
+        // Retrieve from the input data ratings,beds, baths and other features.
+        async function cleanRelevantFeatures(){
+            let bnbdata= await d3.json("merge2.json")
+            for (let key in bnbdata){
+                let info= bnbdata[key]
+                for (let town in info){
+                    let listings=info[town]
+                    // console.log(bnbdata)
+                    let updated= listings.map((item)=>{
+                        let amenities= item.name.split("·")
+                        let rating= ((arr, substr)=>{
+                            let foundString= arr.find(str=> str.includes(substr))
+                            if (foundString!==undefined && foundString.includes("New")){
+                                return "0"
+                            }
+                            else if (foundString!==undefined){
+                                let updated= foundString.replace("★","")
+                                updated= updated.replace(/\s/g, '');
+                                return updated
+                            }
+                            else{
+                                return "0"
+                            }
+                        })(amenities,"★")
+                        let beds= amenities[amenities.length-2].split(" ")[1]
+                        if (isNaN(parseInt(beds))){
+                            // Only studios enter this and studios only have one bed.
+                            beds=1
+                        }
+                        let baths=amenities[amenities.length-1].split(" ")[1]
+                        if (isNaN(parseInt(baths))){
+                            // None of our data enters this so baths are all accurate.
+                            baths=1
+                        }
+                        let type= null
+                        if (amenities[0].includes("Rental")){
+                            type="Rental Unit"
+                        }
+                        else if (amenities[0].includes("apartment")){
+                            type= "Apartment"
+                        }
+                        else if (amenities[0].includes("hotel") || amenities[0].includes("Hotel")){
+                            type="Hotel"
+                        }
+                        else if (amenities[0].includes("serviced") || amenities[0].includes("Serviced")){
+                            type="Hotel"
+                        }
+                        else if (amenities[0].includes("suite")){
+                            type="Suite"
+                        }
+                        else if (amenities[0].includes("Place") || amenities[0].includes("Bed")){
+                            type="Bed"
+                        }
+                        else{
+                            type=amenities[0].split(" ")[0]
+                            // console.log(amenities[0].length,amenities[0])
+                        }
+                        item.rating=rating
+                        item.bed=beds
+                        item.baths=baths
+                        item.type=type
+                        // console.log(type)
+
+//                         const result = ((arr, substring) => {
+//   const foundString = arr.find(str => str.includes(substring));
+//   return foundString ? foundString : 0;
+// })(stringArray, substringToCheck);
+                    // console.log(rating)
+                    // console.log(JSON.stringify(bnbdata))
+                    })
+                }
+            }
+            let updatedJSON= {}
+            updatedJSON.boston=[]
+            updatedJSON.nyc=[]
+
+            for(let item in bnbdata.boston){
+                let allListings=bnbdata.boston[item]
+                for (let listing in allListings){
+                    updatedJSON.boston.push(allListings[listing])
+                }
+            }
+
+            for (let item in bnbdata.nyc){
+                let allListings=bnbdata.nyc[item]
+                for (let listing in allListings){
+                    updatedJSON.nyc.push(allListings[listing])
+                }
+            }
+            // console.log(JSON.stringify(updatedJSON))
+
+        }
+        // cleanRelevantFeatures()
 
 
         // UNCOMMENT IF EDITING DATA IS NEEDED AGAIN
@@ -153,18 +404,23 @@
         // Promise.all([nycFinal,bostonFinal])
         //         .then(([data,data2])=>{
         //             let merge= {}
+        //             merge.nyc={}
+        //             merge.boston={}
 
         //             for(let index in data){
-        //                 merge[index]=data[index]
+        //                 merge.nyc[index]=data[index]
         //             }
 
         //             for (let index2 in data2){
-        //                 merge[index2]=data2[index2]
+        //                 merge.boston[index2]=data2[index2]
         //             }
 
         //             let stringify= JSON.stringify(merge)
                     
         //         })
+
+
+
     </script>
 </body>
 </html>
