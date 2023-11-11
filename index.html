@@ -40,13 +40,13 @@
 
         </div>
     </div>
+
+    <div id="popup" style="position: absolute; visibility: hidden; background-color: white; padding: 10px; border: 1px solid #000;">
+    </div>    
     <script>
 
         const createVisualiation= async function(){
             const bnbdata= await d3.json("merge-clean.json")
-            console.log(bnbdata)
-
-
 
             // Boston constants
             const bostonmap = await d3.json("boston.topojson")
@@ -79,6 +79,7 @@
             const bostonControls= d3.select("#boston-controls")
             const uniqueNeighborhoods= new Set(bnbdata.boston.map((element)=>element.neighbourhood))
             const allNeighborhoods= Array.from(uniqueNeighborhoods)
+            allNeighborhoods.unshift("Any");
             let neighborhoodControl= makeInput(bostonControls,"Neighborhoods:",allNeighborhoods)
 
             let priceInterval= d3.extent(bnbdata.boston.map((element)=> parseInt(element.price)))
@@ -87,30 +88,33 @@
                 priceRange.push(i)
             }
 
-
             let minPriceControl= makeInput(bostonControls,"Min Price:",priceRange)
             let maxPriceControl= makeInput(bostonControls,"Max Price:",priceRange)
+            maxPriceControl.property("value", priceInterval[1]);
 
             let bedInterval= d3.extent(bnbdata.boston.map((element)=> parseInt(element.bed)))
-            let bedRange=[]
+            let bedRange=["Any"]
             for (let i=0;i<bedInterval[1];i++){
                 bedRange.push(i)
             }
 
             let bedControl= makeInput(bostonControls,"Number of Beds:",bedRange)
+            bedControl.property("value", "Any");
 
             let bathInterval= d3.extent(bnbdata.boston.map((element)=> parseInt(element.baths)))
-            let bathRange=[]
+            let bathRange=["Any"]
             for (let i=0;i<bathInterval[1];i++){
                 bathRange.push(i)
             }
             
             let bathControl=makeInput(bostonControls,"Number of Baths:",bathRange)
+            bathControl.property("value", "Any");
 
             const dwellingtype= new Set(bnbdata.boston.map((element)=>element.type))
             const allDwellings= Array.from(dwellingtype)
-
+            allDwellings.unshift("Any");
             let housingType= makeInput(bostonControls,"Housing Type:",allDwellings)
+            housingType.property("value", "Any");
 
             // const priceRange= d3.extent(bnbdata.boston.)
             // console.log(res)
@@ -155,6 +159,7 @@
             const nycControls= d3.select("#nyc-controls")
             const uniquenycNeighborhoods= new Set(bnbdata.nyc.map((element)=>element.neighbourhood))
             const allnycNeighborhoods= Array.from(uniquenycNeighborhoods)
+            allnycNeighborhoods.unshift("Any");
             let neighborhoodnycControl= makeInput(nycControls,"Neighborhoods: ",allnycNeighborhoods)
 
             let pricenycInterval= d3.extent(bnbdata.nyc.map((element)=> parseInt(element.price)))
@@ -166,9 +171,10 @@
 
             let minPricenycControl= makeInput(nycControls,"Min Price: ",pricenycRange)
             let maxPricenycControl= makeInput(nycControls,"Max Price: ",pricenycRange)
+            maxPricenycControl.property("value", pricenycInterval[1]);
 
             let bednycInterval= d3.extent(bnbdata.nyc.map((element)=> parseInt(element.bed)))
-            let bednycRange=[]
+            let bednycRange=["Any"]
             for (let i=0;i<bednycInterval[1];i++){
                 bednycRange.push(i)
             }
@@ -176,7 +182,7 @@
             let bednycControl= makeInput(nycControls,"Number of Beds: ",bednycRange)
 
             let bathnycInterval= d3.extent(bnbdata.nyc.map((element)=> parseInt(element.baths)))
-            let bathnycRange=[]
+            let bathnycRange=["Any"]
             for (let i=0;i<bathnycInterval[1];i++){
                 bathnycRange.push(i)
             }
@@ -185,10 +191,146 @@
 
             const dwellingnyctype= new Set(bnbdata.nyc.map((element)=>element.type))
             const allnycDwellings= Array.from(dwellingnyctype)
-
+            allnycDwellings.unshift("Any");
             let housingnycType= makeInput(nycControls,"Housing Type: ",allnycDwellings)
-            
-            
+
+            function updateBostonMap() {
+
+                const selectedNeighborhood = neighborhoodControl.property("value");
+                const selectedMinPrice = parseInt(minPriceControl.property("value"));
+                const selectedMaxPrice = parseInt(maxPriceControl.property("value"));
+                let selectedNumberOfBeds;
+                const bedValue = bedControl.property("value");
+                if (bedValue === "Any") {
+                    selectedNumberOfBeds = "Any";
+                } else {
+                    selectedNumberOfBeds = parseInt(bedValue);
+                }
+                let selectedNumberOfBaths;
+                const bathValue = bedControl.property("value");
+                if (bathValue === "Any") {
+                    selectedNumberOfBaths = "Any";
+                } else {
+                    selectedNumberOfBaths = parseInt(bathValue);
+                }
+                const selectedHousingType = housingType.property("value");
+
+                const filteredData = bnbdata.boston.filter(listing => {
+                    return (selectedNeighborhood === "Any" || listing.neighbourhood === selectedNeighborhood) &&
+                    (parseInt(listing.price) >= selectedMinPrice) &&
+                    (parseInt(listing.price) <= selectedMaxPrice) &&
+                    (selectedNumberOfBeds === "Any" || parseInt(listing.bed) == selectedNumberOfBeds) &&
+                    (selectedNumberOfBaths === "Any" || parseInt(listing.baths) == selectedNumberOfBaths) &&
+                    (selectedHousingType === "Any" || listing.type === selectedHousingType);
+                });
+
+                let circles = bostonvisualization.selectAll("circle")
+                    .data(filteredData, d => d.id);
+
+                const jitter = () => Math.floor(Math.random() * 9) - 4;
+                const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+
+                circles.enter().append("circle")
+                    .attr("cx", d => bostonproj([d.longitude, d.latitude])[0] + jitter())
+                    .attr("cy", d => bostonproj([d.longitude, d.latitude])[1] + jitter())
+                    .attr("r", 5)
+                    .attr("fill", d => colorScale(d.rating))
+                    .on("mouseover", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "visible")
+                        .style("left", (event.pageX + 10) + "px") 
+                        .style("top", (event.pageY + 10) + "px")
+                        .html(`Price: $${d.price}<br>Rating: ${d.rating}`);
+                    })
+                    .on("mouseout", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "hidden");
+                    });
+
+                circles.attr("cx", d => bostonproj([d.longitude, d.latitude])[0])
+                    .attr("cy", d => bostonproj([d.longitude, d.latitude])[1]);
+
+                circles.exit().remove();
+            }
+
+            neighborhoodControl.on("change", updateBostonMap);
+            minPriceControl.on("change", updateBostonMap);
+            maxPriceControl.on("change", updateBostonMap);
+            bedControl.on("change", updateBostonMap);
+            bathControl.on("change", updateBostonMap);
+            housingType.on("change", updateBostonMap);
+
+            updateBostonMap()
+
+            function updateNycMap() {
+                console.log('hi')
+                const selectedNeighborhood = neighborhoodnycControl.property("value");
+                const selectedMinPrice = parseInt(minPricenycControl.property("value"));
+                const selectedMaxPrice = parseInt(maxPricenycControl.property("value"));
+                let selectedNumberOfBeds;
+                const bedValue = bedControl.property("value");
+                if (bedValue === "Any") {
+                    selectedNumberOfBeds = "Any";
+                } else {
+                    selectedNumberOfBeds = parseInt(bedValue);
+                }
+                let selectedNumberOfBaths;
+                const bathValue = bedControl.property("value");
+                if (bathValue === "Any") {
+                    selectedNumberOfBaths = "Any";
+                } else {
+                    selectedNumberOfBaths = parseInt(bathValue);
+                }
+                const selectedHousingType = housingType.property("value");
+                console.log(bnbdata.nyc)
+                const filteredData = bnbdata.nyc.filter(listing => {
+                    return (selectedNeighborhood === "Any" || listing.neighbourhood === selectedNeighborhood) &&
+                    (parseInt(listing.price) >= selectedMinPrice) &&
+                    (parseInt(listing.price) <= selectedMaxPrice) &&
+                    (selectedNumberOfBeds === "Any" || parseInt(listing.bed) == selectedNumberOfBeds) &&
+                    (selectedNumberOfBaths === "Any" || parseInt(listing.baths) == selectedNumberOfBaths) &&
+                    (selectedHousingType === "Any" || listing.type === selectedHousingType);
+                });
+
+                let circles = nycvisualization.selectAll("circle")
+                    .data(filteredData, d => d.id);
+
+                const jitter = () => Math.floor(Math.random() * 9) - 4;
+                const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+
+                circles.enter().append("circle")
+                    .attr("cx", d => nycproj([d.longitude, d.latitude])[0] + jitter())
+                    .attr("cy", d => nycproj([d.longitude, d.latitude])[1] + jitter())
+                    .attr("r", 5)
+                    .attr("fill", d => colorScale(d.rating))
+                    .on("mouseover", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "visible")
+                        .style("left", (event.pageX + 10) + "px") 
+                        .style("top", (event.pageY + 10) + "px")
+                        .html(`Price: $${d.price}<br>Rating: ${d.rating}`);
+                    })
+                    .on("mouseout", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "hidden");
+                    });
+
+                circles.attr("cx", d => nycproj([d.longitude, d.latitude])[0])
+                    .attr("cy", d => nycproj([d.longitude, d.latitude])[1]);
+
+                circles.exit().remove();
+                }
+
+                neighborhoodnycControl.on("change", updateNycMap);
+                minPricenycControl.on("change", updateNycMap);
+                maxPricenycControl.on("change", updateNycMap);
+                bednycControl.on("change", updateNycMap);
+                bathnycControl.on("change", updateNycMap);
+                housingnycType.on("change", updateNycMap);
+
+                updateBostonMap()
+                updateNycMap()
+
             // Input slider setup
             // const bnbdata= await d3.json("merge2.json")
             // console.log(bnbdata)
@@ -206,6 +348,8 @@
                         .data(options)
                         .join("option")
                         .text(d=> d)
+
+                return selector
 
             }
             
@@ -230,6 +374,7 @@
         }
 
         createVisualiation()
+
 
         // FUNCTION FOR CLEANING DATA. EDIT FOR OTHER CHANGES.
         async function trimNYC(path){
