@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-
+        html{
+            font-family: "Inter",sans-serif
+        }
 
         #header{
             background-color:#242424;
@@ -187,7 +190,7 @@
             let nycSelection = nycvisualization.selectAll("path")
                                                     .data(nycFeature.features)
                                                     .join("path")
-                                                    .attr("fill", "white")
+                                                    .attr("fill", "#A8DAB5")
                                                     .attr("stroke", "black")
                                                     .attr("d", nycpath);
 
@@ -196,7 +199,7 @@
                                                     .attr("d", nycpath)
                                                     .attr("stroke", "black")
                                                     .attr("stroke-width", 1)
-                                                    .attr("fill", "none");
+                                                    .attr("fill", "#A8DAB5");
 
             // NYC control section
             const nycControls= d3.select("#nyc-controls")
@@ -301,17 +304,24 @@
                     .attr("cx", d => bostonproj([d.longitude, d.latitude])[0] + jitter())
                     .attr("cy", d => bostonproj([d.longitude, d.latitude])[1] + jitter())
                     .attr("r", 5)
-                    .attr("fill", d => colorScale(d.rating))
+                    .attr("fill", d => "#ac2f2f")
+                    .attr("stroke","white")
                     .on("mouseover", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "visible")
                         .style("left", (event.pageX + 10) + "px") 
                         .style("top", (event.pageY + 10) + "px")
                         .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);
+
+                        d3.select(this)
+                            .attr("r",7)
                     })
                     .on("mouseout", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "hidden");
+
+                        d3.select(this)
+                            .attr("r",5)
                     });
 
                 circles.attr("cx", d => bostonproj([d.longitude, d.latitude])[0])
@@ -339,17 +349,24 @@
                     .attr("cx", d => bostonproj([d.longitude, d.latitude])[0] + jitter())
                     .attr("cy", d => bostonproj([d.longitude, d.latitude])[1] + jitter())
                     .attr("r", 5)
-                    .attr("fill", d => colorScale(d.rating))
+                    .attr("fill", d => "#ac2f2f")
+                    .attr("stroke","white")
                     .on("mouseover", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "visible")
                         .style("left", (event.pageX + 10) + "px") 
                         .style("top", (event.pageY + 10) + "px")
                         .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);
+
+                        d3.select(this)
+                            .attr("r",7)
                     })
                     .on("mouseout", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "hidden");
+
+                        d3.select(this)
+                            .attr("r",5)
                     });
 
                 circles.attr("cx", d => bostonproj([d.longitude, d.latitude])[0])
@@ -422,17 +439,24 @@
                     .attr("cx", d => nycproj([d.longitude, d.latitude])[0] + jitter())
                     .attr("cy", d => nycproj([d.longitude, d.latitude])[1] + jitter())
                     .attr("r", 5)
-                    .attr("fill", d => colorScale(d.rating))
+                    .attr("fill", d => "#ac2f2f")
+                    .attr("stroke","white")
                     .on("mouseover", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "visible")
                         .style("left", (event.pageX + 10) + "px") 
                         .style("top", (event.pageY + 10) + "px")
-                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);;
+                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);
+
+                        d3.select(this)
+                            .attr("r",7)
                     })
                     .on("mouseout", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "hidden");
+
+                        d3.select(this)
+                            .attr("r",5)
                     });
 
                 circles.attr("cx", d => nycproj([d.longitude, d.latitude])[0])
@@ -470,17 +494,25 @@
                     .attr("cx", d => nycproj([d.longitude, d.latitude])[0] + jitter())
                     .attr("cy", d => nycproj([d.longitude, d.latitude])[1] + jitter())
                     .attr("r", 5)
-                    .attr("fill", d => colorScale(d.rating))
+                    .attr("fill", d => "#ac2f2f")
+                    .attr("stroke","white")
                     .on("mouseover", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "visible")
                         .style("left", (event.pageX + 10) + "px") 
                         .style("top", (event.pageY + 10) + "px")
-                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);;
+                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);
+
+                        d3.select(this)
+                        .attr("r",7)
+
                     })
                     .on("mouseout", function(event, d) {
                         d3.select("#popup")
                         .style("visibility", "hidden");
+
+                        d3.select(this)
+                            .attr("r",5)
                     });
 
                 circles.attr("cx", d => nycproj([d.longitude, d.latitude])[0])
