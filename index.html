@@ -116,7 +116,7 @@
             let bostonSelection = bostonvisualization.selectAll("path")
                                                     .data(bostonFeature.features)
                                                     .join("path")
-                                                    .attr("fill", "white")
+                                                    .attr("fill", "#A8DAB5")
                                                     .attr("stroke", "black")
                                                     .attr("d", bostonpath);
 
@@ -168,6 +168,11 @@
             let housingType= makeInput(bostonControls,"Housing Type:",allDwellings)
             housingType.property("value", "Any");
 
+            let intervalButton= makeIntervalButton(bostonControls,"Show next 30 results:",showNextIntervalBoston)
+
+            let bostonFilteredData=[]
+            let bostonIndex=0
+
 
             // NYC constants
             const nycmap = await d3.json("NTA.topojson")
@@ -193,6 +198,7 @@
                                                     .attr("stroke-width", 1)
                                                     .attr("fill", "none");
 
+            // NYC control section
             const nycControls= d3.select("#nyc-controls")
             const uniquenycNeighborhoods= new Set(bnbdata.nyc.map((element)=>element.neighbourhood))
             const allnycNeighborhoods= Array.from(uniquenycNeighborhoods)
@@ -231,6 +237,14 @@
             allnycDwellings.unshift("Any");
             let housingnycType= makeInput(nycControls,"Housing Type: ",allnycDwellings)
 
+            let intervalButtonNyc= makeIntervalButton(nycControls,"Show next 30 results:", showNextIntervalNYC)
+
+            let nycFilteredData=[]
+            let nycIndex=0
+
+            /**
+             * A function for updating the points rendered on the boston map based on the filters applied
+             * */
             function updateBostonMap() {
 
                 const selectedNeighborhood = neighborhoodControl.property("value");
@@ -252,7 +266,7 @@
                 }
                 const selectedHousingType = housingType.property("value");
 
-                const filteredData = bnbdata.boston.filter(listing => {
+                bostonFilteredData=bnbdata.boston.filter(listing => {
                     return (selectedNeighborhood === "Any" || listing.neighbourhood === selectedNeighborhood) &&
                     (parseInt(listing.price) >= selectedMinPrice) &&
                     (parseInt(listing.price) <= selectedMaxPrice) &&
@@ -261,10 +275,26 @@
                     (selectedHousingType === "Any" || listing.type === selectedHousingType);
                 });
 
-                let circles = bostonvisualization.selectAll("circle")
-                    .data(filteredData, d => d.id);
+                // Group the data into interval of size 30 
+                if (bostonFilteredData.length==0){
+                    bostonFilteredData=[[]]
+                    bostonIndex=0
+                }
+                else{
+                    let temp=[]
+                    let intervalSize=30
+                    for (let i=0;i<bostonFilteredData.length;i+=intervalSize){
+                        temp.push(bostonFilteredData.slice(i,i+intervalSize))
+                    }
+                    bostonFilteredData=temp
+                    bostonIndex=0
+                }
 
-                const jitter = () => Math.floor(Math.random() * 9) - 4;
+                let circles = bostonvisualization.selectAll("circle")
+                    .data(bostonFilteredData[bostonIndex], d => d.id);
+
+                // Add jitter to combat overlapping points
+                const jitter = () => Math.floor(Math.random() * 15) - 4;
                 const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
 
                 circles.enter().append("circle")
@@ -277,7 +307,45 @@
                         .style("visibility", "visible")
                         .style("left", (event.pageX + 10) + "px") 
                         .style("top", (event.pageY + 10) + "px")
-                        .html(`Price: $${d.price}<br>Rating: ${d.rating}`);
+                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);
+                    })
+                    .on("mouseout", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "hidden");
+                    });
+
+                circles.attr("cx", d => bostonproj([d.longitude, d.latitude])[0])
+                    .attr("cy", d => bostonproj([d.longitude, d.latitude])[1]);
+
+                circles.exit().remove();
+            }
+
+            /**
+             * Function for rendering the next set of points for a given set of filters for the boston visualization.
+             * */
+            function showNextIntervalBoston(){
+                bostonIndex=bostonIndex+1
+                if (bostonIndex>=bostonFilteredData.length){
+                    bostonIndex=0
+                }
+
+                let circles = bostonvisualization.selectAll("circle")
+                    .data(bostonFilteredData[bostonIndex], d => d.id);
+
+                const jitter = () => Math.floor(Math.random() * 15) - 4;
+                const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+
+                circles.enter().append("circle")
+                    .attr("cx", d => bostonproj([d.longitude, d.latitude])[0] + jitter())
+                    .attr("cy", d => bostonproj([d.longitude, d.latitude])[1] + jitter())
+                    .attr("r", 5)
+                    .attr("fill", d => colorScale(d.rating))
+                    .on("mouseover", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "visible")
+                        .style("left", (event.pageX + 10) + "px") 
+                        .style("top", (event.pageY + 10) + "px")
+                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);
                     })
                     .on("mouseout", function(event, d) {
                         d3.select("#popup")
@@ -296,9 +364,10 @@
             bedControl.on("change", updateBostonMap);
             bathControl.on("change", updateBostonMap);
             housingType.on("change", updateBostonMap);
-
-            updateBostonMap()
-
+            
+            /**
+             * A function for updating the points rendered on the nyc map based on the filters applied.
+             * */
             function updateNycMap() {
                 const selectedNeighborhood = neighborhoodnycControl.property("value");
                 const selectedMinPrice = parseInt(minPricenycControl.property("value"));
@@ -318,7 +387,8 @@
                     selectedNumberOfBaths = parseInt(bathValue);
                 }
                 const selectedHousingType = housingType.property("value");
-                const filteredData = bnbdata.nyc.filter(listing => {
+
+                nycFilteredData=bnbdata.nyc.filter(listing => {
                     return (selectedNeighborhood === "Any" || listing.neighbourhood === selectedNeighborhood) &&
                     (parseInt(listing.price) >= selectedMinPrice) &&
                     (parseInt(listing.price) <= selectedMaxPrice) &&
@@ -327,10 +397,25 @@
                     (selectedHousingType === "Any" || listing.type === selectedHousingType);
                 });
 
-                let circles = nycvisualization.selectAll("circle")
-                    .data(filteredData, d => d.id);
+                // Group the data into interval of size 30 and render each portion based on a button click
+                if (nycFilteredData.length==0){
+                    nycFilteredData=[[]]
+                    nycIndex=0
+                }
+                else{
+                    let temp=[]
+                    let intervalSize=30
+                    for (let i=0;i<nycFilteredData.length;i+=intervalSize){
+                        temp.push(nycFilteredData.slice(i,i+intervalSize))
+                    }
+                    nycFilteredData=temp
+                    nycIndex=0
+                }
 
-                const jitter = () => Math.floor(Math.random() * 9) - 4;
+                let circles = nycvisualization.selectAll("circle")
+                    .data(nycFilteredData[nycIndex], d => d.id);
+
+                const jitter = () => Math.floor(Math.random() * 15) - 4;
                 const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
 
                 circles.enter().append("circle")
@@ -343,7 +428,7 @@
                         .style("visibility", "visible")
                         .style("left", (event.pageX + 10) + "px") 
                         .style("top", (event.pageY + 10) + "px")
-                        .html(`Price: $${d.price}<br>Rating: ${d.rating}`);
+                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);;
                     })
                     .on("mouseout", function(event, d) {
                         d3.select("#popup")
@@ -365,7 +450,48 @@
 
                 updateBostonMap()
                 updateNycMap()
+            
+            /**
+             * Function for rendering the next set of poits for a given set of filters for the nyc visualizations.
+             * */
+            function showNextIntervalNYC(){
+                nycIndex=nycIndex+1
+                if (nycIndex>=nycFilteredData.length){
+                    nycIndex=0
+                }
 
+                let circles = nycvisualization.selectAll("circle")
+                    .data(nycFilteredData[nycIndex], d => d.id);
+
+                const jitter = () => Math.floor(Math.random() * 15) - 4;
+                const colorScale = d3.scaleOrdinal(d3.schemeCategory10)
+
+                circles.enter().append("circle")
+                    .attr("cx", d => nycproj([d.longitude, d.latitude])[0] + jitter())
+                    .attr("cy", d => nycproj([d.longitude, d.latitude])[1] + jitter())
+                    .attr("r", 5)
+                    .attr("fill", d => colorScale(d.rating))
+                    .on("mouseover", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "visible")
+                        .style("left", (event.pageX + 10) + "px") 
+                        .style("top", (event.pageY + 10) + "px")
+                        .html(`Name: ${d.name}<br>Price: $${d.price}<br>Rating: ${d.rating}<br>Beds: ${d.bed}<br>Baths: ${d.baths}<br>Neighborhood: ${d.neighbourhood}`);;
+                    })
+                    .on("mouseout", function(event, d) {
+                        d3.select("#popup")
+                        .style("visibility", "hidden");
+                    });
+
+                circles.attr("cx", d => nycproj([d.longitude, d.latitude])[0])
+                    .attr("cy", d => nycproj([d.longitude, d.latitude])[1]);
+
+                circles.exit().remove();
+            }
+
+            /**
+             * A helper function for making control inputs.
+             * */
             function makeInput(container,label, options){
                 
                 let div =container.append("div")
@@ -382,12 +508,28 @@
 
             }
 
+            /**
+             * A helper function for a button for each interval based on intervals.
+             * */
+            function makeIntervalButton(container,label, updateFunction){
+                let div= container.append("div")
+                div.append("p").text(label)
+
+                let button = div.append("button").text("Load more")
+
+                button.on("click", updateFunction)
+
+                return button
+            }
+
         }
 
         createVisualiation()
 
 
-        // FUNCTION FOR CLEANING DATA. EDIT FOR OTHER CHANGES.
+        /**
+         * A function for trimming the dataset size and grabbing relevant information for nyc.
+         * */
         async function trimNYC(path){
 
             let nyc= await d3.csv(path)
@@ -430,6 +572,9 @@
             return final
         }
 
+        /**
+         * A function for trimming the dataset size and grabbing relevant information for boston.
+         * */
         async function trimBoston(path){
             let boston= await d3.csv(path)
             let boroughs= {}
@@ -458,14 +603,43 @@
             return boroughs
         }
 
-        // Retrieve from the input data ratings,beds, baths and other features.
-        async function cleanRelevantFeatures(){
+
+        /**
+         * Generate a json with boston and nyc data
+         * */
+        async function generateFinalData(){
+            let nycFinal=trimNYC("./listings.csv")
+            let bostonFinal=trimBoston("./listings-2.csv")
+
+            Promise.all([nycFinal,bostonFinal])
+                    .then(([data,data2])=>{
+                        let merge= {}
+                        merge.nyc={}
+                        merge.boston={}
+
+                        for(let index in data){
+                            merge.nyc[index]=data[index]
+                        }
+
+                        for (let index2 in data2){
+                            merge.boston[index2]=data2[index2]
+                        }
+
+                        let stringify= JSON.stringify(merge)
+                        
+                    })
+
+        }
+
+         /**
+         * A function for cleaning the data and extracting relevant features such as ratings,beds and baths from the boston and nyc json file.
+         * */
+         async function cleanRelevantFeatures(){
             let bnbdata= await d3.json("merge2.json")
             for (let key in bnbdata){
                 let info= bnbdata[key]
                 for (let town in info){
                     let listings=info[town]
-                    // console.log(bnbdata)
                     let updated= listings.map((item)=>{
                         let amenities= item.name.split("·")
                         let rating= ((arr, substr)=>{
@@ -489,7 +663,6 @@
                         }
                         let baths=amenities[amenities.length-1].split(" ")[1]
                         if (isNaN(parseInt(baths))){
-                            // None of our data enters this so baths are all accurate.
                             baths=1
                         }
                         let type= null
@@ -513,20 +686,11 @@
                         }
                         else{
                             type=amenities[0].split(" ")[0]
-                            // console.log(amenities[0].length,amenities[0])
                         }
                         item.rating=rating
                         item.bed=beds
                         item.baths=baths
                         item.type=type
-                        // console.log(type)
-
-//                         const result = ((arr, substring) => {
-//   const foundString = arr.find(str => str.includes(substring));
-//   return foundString ? foundString : 0;
-// })(stringArray, substringToCheck);
-                    // console.log(rating)
-                    // console.log(JSON.stringify(bnbdata))
                     })
                 }
             }
@@ -547,33 +711,10 @@
                     updatedJSON.nyc.push(allListings[listing])
                 }
             }
+            // Json stringify extracts the data and allows copying into a json file.
             // console.log(JSON.stringify(updatedJSON))
 
         }
-        // cleanRelevantFeatures()
-
-
-        // UNCOMMENT IF EDITING DATA IS NEEDED AGAIN
-        // let nycFinal=trimNYC("./listings.csv")
-        // let bostonFinal=trimBoston("./listings-2.csv")
-
-        // Promise.all([nycFinal,bostonFinal])
-        //         .then(([data,data2])=>{
-        //             let merge= {}
-        //             merge.nyc={}
-        //             merge.boston={}
-
-        //             for(let index in data){
-        //                 merge.nyc[index]=data[index]
-        //             }
-
-        //             for (let index2 in data2){
-        //                 merge.boston[index2]=data2[index2]
-        //             }
-
-        //             let stringify= JSON.stringify(merge)
-                    
-        //         })
 
 
 
