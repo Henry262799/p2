@@ -7,42 +7,92 @@
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        #header{
+            background-color:#242424;
+            height: 200px;
+            margin-bottom: 40px;
+        }
+        
+        #logo{
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: auto;
+            margin-bottom: auto;
+        }
+
         .neighborhood {
-        fill: none;
+        fill: #A8DAB5;
         stroke: #000;
         stroke-linejoin: round;
-    }
+        }
+
         #boston-container{
             display: flex;
             flex-direction: row;
             justify-content:space-around;
-            margin-bottom: 40px;
+            margin-bottom: 60px;
+        }
+
+        #boston-controls{
+            display: block;
+            margin-top: auto;
+            margin-bottom: auto;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
         }
 
         #nyc-container{
             display: flex;
             flex-direction: row;
             justify-content: space-around;
-            
+            margin-bottom: 100px;
         }
+
+        #nyc-controls{
+            display: block;
+            margin-top: auto;
+            margin-bottom: auto;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+        }
+
+        #footer{
+            background-color:#242424;
+            height: 200px;
+        }
+
+        #footer_img{
+            display: block;
+            margin-left: auto;
+            margin-right: auto
+        }
+
     </style>
 </head>
 <body>
+    <div id="header">
+        <img src="images/housingexpert_dark.png" alt="Housing Expert Logo" id="logo">
+    </div>
     <div id="boston-container">
         <svg id="boston" height="700" width="750" "></svg>
         <div id="boston-controls">
-
+            <img src="images/bostonHeader.png" alt="Boston, MA">
         </div>
     </div>
     <div id="nyc-container">
         <svg id="nyc" height="700" width="750"></svg>
         <div id="nyc-controls">
-
+            <img src="images/nycHeader.png" alt="New York, New York">
         </div>
     </div>
 
+    <div id="footer">
+        <img src="images/footer.png" alt="Footer: From Blocks to Brownstones, Find your Fit" id="footer_img">
+    </div>
+
     <div id="popup" style="position: absolute; visibility: hidden; background-color: white; padding: 10px; border: 1px solid #000;">
-    </div>    
+    </div> 
     <script>
 
         const createVisualiation= async function(){
