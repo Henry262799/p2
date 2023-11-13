@@ -7,6 +7,8 @@
     <script src="https://d3js.org/topojson.v3.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+
+
         #header{
             background-color:#242424;
             height: 200px;
@@ -123,7 +125,7 @@
                                                     .attr("d", bostonpath)
                                                     .attr("stroke", "black")
                                                     .attr("stroke-width", 1)
-                                                    .attr("fill", "none");
+                                                    .attr("fill", "#A8DAB5");
 
             // Boston control section
             const bostonControls= d3.select("#boston-controls")
@@ -165,21 +167,6 @@
             allDwellings.unshift("Any");
             let housingType= makeInput(bostonControls,"Housing Type:",allDwellings)
             housingType.property("value", "Any");
-
-            // const priceRange= d3.extent(bnbdata.boston.)
-            // console.log(res)
- 
-            // bostonControls.append("p").text("Min Price:")
-            //               .append("input")
-            //               .attr("type")
-            
-            // Min price
-            // Max Price
-            // Neighborhood (Can be none)
-            // Room type
-            // Bedrooms and Bathrooms
-
-            // console.log()
 
 
             // NYC constants
@@ -313,7 +300,6 @@
             updateBostonMap()
 
             function updateNycMap() {
-                console.log('hi')
                 const selectedNeighborhood = neighborhoodnycControl.property("value");
                 const selectedMinPrice = parseInt(minPricenycControl.property("value"));
                 const selectedMaxPrice = parseInt(maxPricenycControl.property("value"));
@@ -332,7 +318,6 @@
                     selectedNumberOfBaths = parseInt(bathValue);
                 }
                 const selectedHousingType = housingType.property("value");
-                console.log(bnbdata.nyc)
                 const filteredData = bnbdata.nyc.filter(listing => {
                     return (selectedNeighborhood === "Any" || listing.neighbourhood === selectedNeighborhood) &&
                     (parseInt(listing.price) >= selectedMinPrice) &&
@@ -381,12 +366,6 @@
                 updateBostonMap()
                 updateNycMap()
 
-            // Input slider setup
-            // const bnbdata= await d3.json("merge2.json")
-            // console.log(bnbdata)
-            // console.log(res)
-            // console.log(allNeighborhoods)
-
             function makeInput(container,label, options){
                 
                 let div =container.append("div")
@@ -402,24 +381,6 @@
                 return selector
 
             }
-            
-
-            // TO DO
-            // dropdown input for filters 
-            
-            // Container for filter controls
-            // Filter is updated from inputs
-            // Points that pass filter can be rendered.
-
-
-            // No default values so no initial data rendering until a submit happens
-            // Render data points after getting the input values or submission
-
-            // Depending on the amount of data filter the amount of data that will be allowed to rendered
-            // Maybe add a jitter function to move points around to decrease the amount of overlap.
-            
-            // Integrate a hover feature for a div to come up with additional information on the point
-
 
         }
 
